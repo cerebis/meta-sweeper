@@ -179,7 +179,7 @@ process ProfileMerge {
         """
     } else {
         """
-        profile_merge.py clade_profile* ${key}.mprf
+        profile_merge.py --seed ${key['seed']} clade_profile* ${key}.mprf
         """
     }
 }

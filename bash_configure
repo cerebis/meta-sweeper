@@ -40,7 +40,7 @@ fi
 printf "Checking for BEAGLE_LIB: "
 if [ -z $BEAGLE_LIB ]
 then
-    echo "$(tput setaf 3)Warning: BEAGLE_LIB not set.$(tput sgr0) At runtime Beast needs to locate libhmsbeagle-jni.so"
+    echo "$(tput setaf 3)Warning: BEAGLE_LIB not set.$(tput sgr0) At runtime BEAST needs to locate libhmsbeagle-jni.so"
 else
     printf "$(tput setaf 2)BEAGLE_LIB=$BEAGLE_LIB$(tput sgr0)"
     if [ ! -e $BEAGLE_LIB/libhmsbeagle-jni.so ]

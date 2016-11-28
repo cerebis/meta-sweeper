@@ -184,6 +184,12 @@ class Profile(OrderedDict):
         for ai in self.values():
             ai.val /= val_sum
 
+    def scale(self, scalar):
+        """
+        Scale a profile by a fixed multiplicative factor.
+        """
+        for ai in self.values():
+            ai.val *= scalar
 
 def read_profile(hndl):
     """

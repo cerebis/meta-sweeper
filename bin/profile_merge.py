@@ -18,20 +18,39 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 import argparse
-
+import numpy as np
 import abundance
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate random abundance profiles for a given multifasta file')
+    parser.add_argument('--seed', type=int, metavar='INT', help='Random seed')
+    parser.add_argument('--lognorm-mu', metavar='FLOAT', type=float, default='1', required=False,
+                        help='Log-normal relative abundance mu parameter')
+    parser.add_argument('--lognorm-sigma', metavar='FLOAT', type=float, default='1', required=False,
+                        help='Log-normal relative abundance sigma parameter')
     parser.add_argument('input', metavar='FILE', nargs='*', help='Input abundance profile tables')
     parser.add_argument('output', metavar='FILE', help='Output merged table')
     args = parser.parse_args()
 
+    RANDOM_STATE = None
+    if not args.seed:
+        print 'Warning: not specifying a seed makes repeatability difficult!'
+        RANDOM_STATE = np.random.RandomState()
+    else:
+        RANDOM_STATE = np.random.RandomState(args.seed)
+
+    pscaled = abundance.generate_profile(RANDOM_STATE, len(args.input), mode="lognormal",lognorm_mu=args.lognorm_mu, lognorm_sigma=args.lognorm_sigma)
+
     profile = abundance.Profile()
+    i=-1
     for fn in args.input:
+        i+=1
         with open(fn, 'r') as in_h:
             print 'Reading {0}'.format(fn)
-            profile.update(abundance.read_profile(in_h))
+            tmp_prof = abundance.read_profile(in_h)
+            tmp_prof.scale(pscaled[i])
+            profile.update(tmp_prof)
+
 
     # re-establish relative weighting -- bring the sum of all abundances back down to 1.
     profile.normalize()

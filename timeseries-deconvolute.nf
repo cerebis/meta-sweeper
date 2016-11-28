@@ -27,7 +27,8 @@
 import MetaSweeper
 import groovy.util.GroovyCollections
 
-MetaSweeper ms = MetaSweeper.fromFile(new File('timeseries.yaml'))
+MetaSweeper ms = MetaSweeper.fromFile(new File('timeseries-multispecies.yaml'))
+params.debug=false
 
 /**
  * Generate phylogenetic trees for each clade within each community
@@ -168,8 +169,10 @@ process ProfileMerge {
         echo $key > "${key}.mprf"
         """
     } else {
+        def mu = ms.options.species.mu
+        def sigma = ms.options.species.sigma
         """
-        profile_merge.py clade_profile* ${key}.mprf
+        profile_merge.py --seed ${key['seed']} --lognorm-mu $mu --lognorm-sigma $sigma  clade_profile* ${key}.mprf
         """
     }
 }
@@ -264,8 +267,6 @@ process WGS_Reads {
         metaART.py -C gzip --profile $comm_prof -z $ms.options.num_samples -M $xfold -S ${key['seed']} \
                 -s $ms.options.wgs.ins_std -m $ms.options.wgs.ins_len -l $ms.options.wgs.read_len \
                 --coverage-out ${key}.cov -n ${key}.wgs $comm_seq .
-        #wait_on_openfile.sh ${key}.wgs.*.r1.fq.gz
-        #wait_on_openfile.sh ${key}.wgs.*.r2.fq.gz
         """
     }
 }

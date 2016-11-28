@@ -1,0 +1,57 @@
+variables:
+  #level 0
+  seed: [1234]
+  # level 1
+  community: !com
+    name: trial
+    # This workflow is complicated by the need to refer to the clade's ancestral sequence
+    # for SNV detection. Only a single clade is supported for now.
+    clades:
+      - !clade
+        prefix: Bfrag1
+        ancestor: test/B_fragilis_638R.fa
+        donor: test/donor.fa # unused
+        ntaxa: 1
+        tree: {birth: 0.9, death: 0.5}
+        profile: {mu: 0.1, sigma: 1}
+      - !clade
+        prefix: Ecoli1
+        ancestor: test/E_coli_MG1655.fa
+        donor: test/donor.fa # unused
+        ntaxa: 1
+        tree: {birth: 0.9, death: 0.5}
+        profile: {mu: 0.1, sigma: 1}
+      - !clade
+        prefix: Saureus1
+        ancestor: test/S_aureus_HO_5096_0412.fa
+        donor: test/donor.fa # unused
+        ntaxa: 1
+        tree: {birth: 0.9, death: 0.5}
+        profile: {mu: 0.1, sigma: 1}
+      - !clade
+        prefix: Bsubtilis1
+        ancestor: test/B_subtilis_168.fa
+        donor: test/donor.fa # unused
+        ntaxa: 1
+        tree: {birth: 0.9, death: 0.5}
+        profile: {mu: 0.1, sigma: 1}
+  # level 2
+  alpha: [0.01]
+  # level 3
+  xfold: [20]
+
+options:
+  num_samples: 40
+  evo:
+    indel_freq: 1e-1
+    small_ht_freq: 1e-4
+    large_ht_freq: 1e-4
+    inversion_freq: 1e-4
+  species:
+    mu: 0.1
+    sigma: 0.1
+  wgs:
+    read_len: 150
+    ins_len: 450
+    ins_std: 100
+  output: out

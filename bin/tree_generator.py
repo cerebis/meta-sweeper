@@ -23,7 +23,7 @@ import sys
 
 from dendropy import TaxonNamespace
 from dendropy.simulate import treesim
-
+import dendropy as dp
 
 def get_taxon_namespace(ntax, label='taxa', prefix='T'):
     """
@@ -111,7 +111,12 @@ if __name__ == '__main__':
     tns = get_taxon_namespace(args.num_taxa, prefix=args.prefix)
 
     gen_tr = None
-    if args.mode == 'random':
+    if args.num_taxa == 1:
+        gen_tr = dp.Tree(taxon_namespace=tns)
+        ch1 = gen_tr.seed_node.new_child()
+        ch1.edge_length=0
+        ch1.taxon = tns[0]
+    elif args.mode == 'random':
         gen_tr = simulate_tree(args.seed, tns, args.max_height, args.birth_rate, args.death_rate)
     elif args.mode == 'star':
         gen_tr = star_tree(tns, args.max_height)

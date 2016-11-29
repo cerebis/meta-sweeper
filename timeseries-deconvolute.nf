@@ -413,7 +413,7 @@ process Accuracy {
     set key, file(truthfile), file(snvbpnmf), file(snv_file), file(tree_file) from accuracy_in
 
     output:
-    set file("${key}.truth.report.txt") into accuracy_out
+    file("${key}.truth.report.txt") into accuracy_out
 
     script:
     if (params.debug) {

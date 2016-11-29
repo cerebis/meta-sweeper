@@ -28,7 +28,6 @@ import MetaSweeper
 import groovy.util.GroovyCollections
 
 MetaSweeper ms = MetaSweeper.fromFile(new File('timeseries-multispecies.yaml'))
-params.debug=false
 
 /**
  * Generate phylogenetic trees for each clade within each community

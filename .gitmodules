@@ -1,0 +1,3 @@
+[submodule "modules/sim3C"]
+	path = modules/sim3C
+	url = https://github.com/cerebis/sim3C.git

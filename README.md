@@ -71,17 +71,6 @@ Installation
 
 ### Nextflow
 
-**Version Requirement**
-
-Currently (June 1st 2017), MetaSweeper _cannot run on the latest release of Nextflow (v0.24)_. The issue will most definitely be resolved in an upcoming release of MetaSweeper. The pipeline does work on release up until 0.23.4.
-
-For now, before invoking the ```wget``` command below, users must set an environmental variable to tell the Nextflow installation script to install a particular version. The default action is to install the latest.
-
-```bash
-export NXF_VER=0.23.4
-wget -qO- get.nextflow.io | bash
-```
-
 The [Nextflow](http://www.nextflow.io/) framework, which can be installed easily using either of the following:
 
 ```wget -qO- get.nextflow.io | bash``` __or__ ```curl -fsSL get.nextflow.io | bash```

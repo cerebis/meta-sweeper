@@ -301,9 +301,6 @@ process CCC_Reads {
 //
 (wgs_out, asm_in) = wgs_out.into(2)
 
-// select just read-set files (R1, R2) and the community sequences
-asm_in = asm_in.map { it.pick(1, 2, 3) }
-
 process Assemble {
     publishDir ms.options.output, mode: 'copy', overwrite: 'true'
 

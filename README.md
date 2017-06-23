@@ -79,6 +79,14 @@ This assumes you have met the prerequisite of installing Java 8+. Note, you will
 
 In addition, meta-sweeper expects that the main executable ```nextflow``` is accessible on the path. Users can move this file to a location already on the path or add its parent directory to the path.
 
+### Cloning MetaSweeper repository
+
+We are employing submodules, therefore when cloning the repository it is easiest to add the recurisve option.
+
+```bash
+git clone --recursive https://github.com/cerebis/meta-sweeper.git
+```
+
 ### Python modules
 
 The workflows depend on the following Python modules, which must be installed prior to using it:

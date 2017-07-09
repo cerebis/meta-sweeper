@@ -84,6 +84,7 @@ if __name__ == '__main__':
 
     RANDOM_STATE = np.random.RandomState(args.seed)
     child_seeds = RANDOM_STATE.randint(LOW_SEED_VALUE, HIGH_SEED_VALUE, args.num_samples).tolist()
+    profile_seeds = RANDOM_STATE.randint(LOW_SEED_VALUE, HIGH_SEED_VALUE, args.num_samples).tolist()
 
     if args.profile:
         # if specified, read the static profile table from disk rather than calculate at runtime.
@@ -96,7 +97,7 @@ if __name__ == '__main__':
         # generate abundance profile from global seeded random state -- if not using a static table
         if not args.profile:
             seq_names = [si for si in seq_index]
-            profile = abundance.generate_profile(args.seed, seq_names, mode=args.dist,
+            profile = abundance.generate_profile(profile_seeds[n], seq_names, mode=args.dist,
                                                  lognorm_mu=args.lognorm_mu, lognorm_sigma=args.lognorm_sigma)
 
         for i, chr_abn in enumerate(profile.values(), start=1):

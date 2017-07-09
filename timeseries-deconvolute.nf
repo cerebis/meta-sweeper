@@ -214,11 +214,14 @@ process WGS_Reads {
 
     input:
     set key, file(comm_seq), file(comm_prof), xfold from wgs_in
+    val community
 
     output:
     set key, file("${key}.wgs.*.r1.fq.gz"), file("${key}.wgs.*.r2.fq.gz"), file("${key}.cov") into wgs_out
 
     script:
+    def mu = community.profile.mu
+    def sigma = community.profile.sigma
     if (params.debug) {
         """
         for ((n=1; n<=$ms.options.num_samples; n++))
@@ -238,11 +241,9 @@ process WGS_Reads {
     else {
         """
         export PATH=\$EXT_BIN/art:\$PATH
-        metaART.py -C gzip --profile $comm_prof -z $ms.options.num_samples -M $xfold -S ${key['seed']} \
+        metaART.py -C gzip -z $ms.options.num_samples -M $xfold -S ${key['seed']} --dist lognormal --lognorm-mu $mu --lognorm-sigma $sigma \
                 -s $ms.options.wgs.ins_std -m $ms.options.wgs.ins_len -l $ms.options.wgs.read_len \
                 --coverage-out ${key}.cov -n ${key}.wgs $comm_seq .
-        #wait_on_openfile.sh ${key}.wgs.*.r1.fq.gz
-        #wait_on_openfile.sh ${key}.wgs.*.r2.fq.gz
         """
     }
 }

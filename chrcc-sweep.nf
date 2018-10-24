@@ -259,6 +259,7 @@ process WGS_Reads {
 (seq_prof, ccc_in) = seq_prof.into(2)
 
 // Add 3C coverage to sweep
+
 sweep.withVariable('num_3c', ms.variables.num_3c)
         .describe('Chromosome Conformation Capture (HiC/3C) Read Generation')
 

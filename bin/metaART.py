@@ -70,7 +70,10 @@ if __name__ == '__main__':
 
     @atexit.register
     def close_cov():
-        coverage_file.close()
+        try:
+            coverage_file.close()
+        except NameError:
+            pass
 
     seq_index = SeqIO.index(args.fasta, 'fasta')
 

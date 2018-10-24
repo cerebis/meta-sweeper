@@ -48,7 +48,7 @@ tt = ttable.read_mcl(args.clustering)
 cl2seq = tt.invert()
 
 
-if len(args.cid_list) > 0:
+if args.cid_list:
     cid_list = args.cid_list
 else:
     cid_list = [ci for ci in cl2seq]

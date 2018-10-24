@@ -79,6 +79,14 @@ This assumes you have met the prerequisite of installing Java 8+. Note, you will
 
 In addition, meta-sweeper expects that the main executable ```nextflow``` is accessible on the path. Users can move this file to a location already on the path or add its parent directory to the path.
 
+### Cloning MetaSweeper repository
+
+We are employing submodules, therefore when cloning the repository it is easiest to add the recurisve option.
+
+```bash
+git clone --recursive https://github.com/cerebis/meta-sweeper.git
+```
+
 ### Python modules
 
 The workflows depend on the following Python modules, which must be installed prior to using it:
@@ -132,9 +140,9 @@ Before running a meta-sweeper workflow, you must initialise the shell environmen
   - ```command -v nextflow``` or ```which nextflow```
 4. A further dependency on [beagle-lib](https://github.com/beagle-dev/beagle-lib) exists for the [timeseries](#2-time-series-deconvolution) workflow.
     
-    To use this workflow, users must set the environmental variable BEAGLE_LIB to point to the directory containing ```libhmsbeagle-jni.so``` shared library file. 
+    To use this workflow, users must set the environmental variable BEAGLE_LIBDIR to point to the directory containing ```libhmsbeagle-jni.so``` shared library file. 
     
-    E.g. ```BEAGLE_LIB=/usr/lib```
+    E.g. ```BEAGLE_LIBDIR=/usr/lib```
     
     For some Linux distributions, beagle-lib can be satisfied through the system package manager. In other cases, users will need to download and [install beagle-lib](https://github.com/beagle-dev/beagle-lib/wiki/LinuxInstallInstructions) manaully. Please be certain to their documentation and make sure that all listed prerequisites described therein are met prior to attempting compilation.
 

@@ -19,7 +19,8 @@ package mzd
  */
 
 @Grab('com.google.guava:guava:19.0')
-@Grab('org.yaml:snakeyaml:1.17')
+@Grab('org.yaml:snakeyaml:1.18')
+
 import groovy.transform.AutoClone
 import groovy.transform.Synchronized
 import groovyx.gpars.dataflow.DataflowChannel
@@ -33,7 +34,7 @@ import nextflow.util.KryoHelper
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.TypeDescription
-import org.yaml.snakeyaml.constructor.Constructor
+import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor
 import com.google.common.hash.Hashing
 import com.google.common.hash.Hasher
 import com.google.common.hash.HashFunction
@@ -1004,7 +1005,7 @@ class MetaSweeper {
                 @Override
                 protected Yaml initialValue() {
                     // constructor root is MetaSweeper
-                    Constructor cnstr = new Constructor(MetaSweeper.class)
+                    CustomClassLoaderConstructor cnstr = new CustomClassLoaderConstructor(MetaSweeper.class, getClass().getClassLoader())
                     // two tags are used to instantiate custom classes from
                     // within the map hierarchy
                     cnstr.addTypeDescription(new TypeDescription(Community.class, '!com'))

@@ -36,16 +36,16 @@ then
     return 1
 fi
 
-# Check for Beagle lib
-printf "Checking for BEAGLE_LIB: "
-if [ -z $BEAGLE_LIB ]
+# Check for Beagle lib directory
+printf "Checking for BEAGLE_LIBDIR: "
+if [ -z $BEAGLE_LIBDIR ]
 then
-    echo "$(tput setaf 3)Warning: BEAGLE_LIB not set.$(tput sgr0) At runtime Beast needs to locate libhmsbeagle-jni.so"
+    echo "$(tput setaf 3)Warning: BEAGLE_LIBDIR not set.$(tput sgr0) At runtime Beast needs to locate libhmsbeagle-jni.so"
 else
-    printf "$(tput setaf 2)BEAGLE_LIB=$BEAGLE_LIB$(tput sgr0)"
-    if [ ! -e $BEAGLE_LIB/libhmsbeagle-jni.so ]
+    printf "$(tput setaf 2)BEAGLE_LIBDIR=$BEAGLE_LIBDIR$(tput sgr0)"
+    if [ ! -e $BEAGLE_LIBDIR/libhmsbeagle-jni.so ]
     then
-        echo " $(tput setaf 1)Error: $BEAGLE_LIB/libhmsbeagle-jni.so not found$(tput sgr0)"
+        echo " $(tput setaf 1)Error: $BEAGLE_LIBDIR/libhmsbeagle-jni.so not found$(tput sgr0)"
         return 1
     else
         echo " $(tput setaf 2)[OK]$(tput sgr0)"

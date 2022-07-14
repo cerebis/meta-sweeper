@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-import numpy as np
+from collections import defaultdict
 
 
 def filter_shared(d, shared):
@@ -31,89 +31,97 @@ def inv_dict(d):
     for v in d.values():
         cl.update(v)
     inv_d = {ci: set() for ci in cl}
-    for oi, cl in d.iteritems():
+    for oi, cl in d.items():
         for ci in cl:
             inv_d[ci].add(oi)
     return inv_d
 
 
-def find_overlap_set(oi, inv_map):
-    ovl_set = set()
-    for cl, obj_set in inv_map.iteritems():
-        if oi in obj_set:
-            ovl_set |= obj_set
-    return ovl_set
+def build_overlap_set_dict(obj2cl):
+    cl2obj = inv_dict(obj2cl)
+    ovl_dict = defaultdict(set)
+    for neighbors in cl2obj.values():
+        for oi in neighbors:
+            ovl_dict[oi].update(neighbors)
+    return ovl_dict
 
 
-def multi_pre(t, c, oi, oj):
-    c_size = len(c[oi] & c[oj])
-    t_size = len(t[oi] & t[oj])
-    return min(t_size, c_size) / float(c_size)
+def build_clsize_dict(cl2obj, ovl_dict):
+    out = {}
+    for oi in cl2obj:
+        out[oi] = {oj: len(cl2obj[oi] & cl2obj[oj]) for oj in ovl_dict[oi]}
+    return out
 
 
-def multi_rec(t, c, oi, oj):
-    c_size = len(c[oi] & c[oj])
-    t_size = len(t[oi] & t[oj])
-    return min(t_size, c_size) / float(t_size)
-
-
-def bcubed_recall(td, cd, w=None):
-    i_td = inv_dict(td)
-    R = 0.0
-    if w:
+def bcubed_recall(ovl_dict, c2c_size, t2t_size, td, weight=None):
+    recall = 0.0
+    if weight:
         for oi in td:
-            ovl = find_overlap_set(oi, i_td)
-            ri = 0.0
-            for oj in ovl:
-                ri += w[oj] * multi_rec(td, cd, oi, oj)
-            W = np.sum([w[oj] for oj in ovl])
-            R += ri / W
+            ovl = ovl_dict[oi]
+            ri = sum(weight[oj] * min(t2t_size[oi][oj], c2c_size[oi].get(oj, 0)) / t2t_size[oi][oj] for oj in ovl)
+            wi = sum(weight[oj] for oj in ovl)
+            recall += ri / wi
     else:
         for oi in td:
-            ovl = find_overlap_set(oi, i_td)
-            ri = 0.0
-            for oj in ovl:
-                ri += multi_rec(td, cd, oi, oj)
-            R += ri / len(ovl)
-    return R/len(td)
+            ovl = ovl_dict[oi]
+            ri = sum(min(t2t_size[oi][oj], c2c_size[oi].get(oj, 0)) / t2t_size[oi][oj] for oj in ovl)
+            recall += ri / len(ovl)
+
+    return recall / len(td)
 
 
-def bcubed_precison(td, cd, w=None):
-    i_cd = inv_dict(cd)
-    P = 0.0
-    if w:
+def bcubed_precision(ovl_dict, c2c_size, t2t_size, cd, weight=None):
+    precision = 0.0
+    if weight:
         for oi in cd:
-            ovl = find_overlap_set(oi, i_cd)
-            pi = 0.0
-            for oj in ovl:
-                pi += w[oj] * multi_pre(td, cd, oi, oj)
-            W = np.sum([w[oj] for oj in ovl])
-            P += pi / W
+            ovl = ovl_dict[oi]
+            pi = sum(weight[oj] * min(t2t_size[oi].get(oj, 0), c2c_size[oi][oj]) / c2c_size[oi][oj] for oj in ovl)
+            wi = sum(weight[oj] for oj in ovl)
+            precision += pi / wi
     else:
         for oi in cd:
-            ovl = find_overlap_set(oi, i_cd)
-            pi = 0.0
-            for oj in ovl:
-                pi += multi_pre(td, cd, oi, oj)
-            P += pi / len(ovl)
-    return P/len(cd)
+            ovl = ovl_dict[oi]
+            pi = sum(min(t2t_size[oi].get(oj, 0), c2c_size[oi][oj]) / c2c_size[oi][oj] for oj in ovl)
+            precision += pi / len(ovl)
+    return precision / len(cd)
 
 
-def bcubed_F(td, cd, weights=None):
+def bcubed_fscore(td, cd, weight=None):
     cd = cd.copy()
     td = td.copy()
     shared = set(td.keys()) & set(cd.keys())
+    assert len(shared) > 0, 'There was no overlap between objects in truth table and clustering'
 
     # ratio of shared to all objects in analysis
-    completeness = len(shared) / float(len(set(cd.keys()) | set(td.keys())))
+    shared_ovlp = len(shared) / len(set(cd.keys()) | set(td.keys()))
+    # print(f'Shared overlap: {shared_ovlp}')
+    shared2tr = len(shared) / len(td)
+    # print(f'Shared fraction relative to truth: {shared2tr}')
+    shared2cl = len(shared) / len(cd)
+    # print(f'Shared fraction relative to clustering: {shared2cl}')
 
     filter_shared(cd, shared)
     filter_shared(td, shared)
 
-    pre = bcubed_precison(td, cd, weights)
-    rec = bcubed_recall(td, cd, weights)
+    print('Building overlap set lookup')
+    cd_ovl = build_overlap_set_dict(cd)
+    td_ovl = build_overlap_set_dict(td)
 
-    return {'pre': pre, 'rec': rec, 'f': 2.0*pre*rec / (pre+rec), 'completeness': completeness}
+    print('Bulding size lookup')
+    c2c_size = build_clsize_dict(cd, cd_ovl)
+    t2t_size = build_clsize_dict(td, td_ovl)
+
+    print('Calculating precision')
+    pre = bcubed_precision(cd_ovl, c2c_size, t2t_size, cd, weight)
+    print('Calculating recall')
+    rec = bcubed_recall(td_ovl, c2c_size, t2t_size, td, weight)
+
+    return {'pre': pre,
+            'rec': rec,
+            'fscore': 2.0*pre*rec / (pre+rec),
+            'shared_overlap': shared_ovlp,
+            'shared2clustering': shared2cl,
+            'shared2truth': shared2tr}
 
 
 if __name__ == '__main__':
@@ -121,6 +129,7 @@ if __name__ == '__main__':
     import truthtable as tt
     import io_utils
     import argparse
+    import pandas as pd
     import sys
 
     def write_msg(stream, msg):
@@ -150,7 +159,7 @@ if __name__ == '__main__':
         weights = truth.get_weights() if args.weighted else None
 
         if args.verbose:
-            print 'Truth Statistics'
+            print('Truth Statistics')
             truth.print_tally()
 
         # convert to a plain dict representation, either soft (1:*) or hard (1:1)
@@ -162,13 +171,14 @@ if __name__ == '__main__':
             raise RuntimeError('Clustering contains no assignments: {0}'.format(args.pred))
 
         if args.verbose:
-            print 'Clustering Statistics'
+            print('Clustering Statistics')
             clustering.print_tally()
         clustering = clustering.soft(True)
 
     except RuntimeError as er:
-        print er.message
+        print(er)
         sys.exit(1)
 
-    result = bcubed_F(truth, clustering, weights)
-    io_utils.write_to_stream(args.output, result, fmt=args.ofmt)
+    result = bcubed_fscore(truth, clustering, weights)
+    # io_utils.write_to_stream(args.output, result, fmt=args.ofmt)
+    pd.DataFrame([result]).to_csv(args.output, index=False, float_format='%.8f')

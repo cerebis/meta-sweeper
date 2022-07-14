@@ -112,6 +112,7 @@ def assignment_rep(dumper, data):
     """
     return dumper.represent_mapping(u'tag:yaml.org,2002:map', data.__dict__, flow_style=True)
 
+
 yaml.add_representer(Assignment, assignment_rep)
 
 
@@ -162,7 +163,7 @@ class TruthTable(object):
         if lengths:
             s = 0
             l = 0
-            for k, v in self.asgn_dict.iteritems():
+            for k, v in self.asgn_dict.items():
                 s += v.num_classes() * lengths[k]
                 l += lengths[k]
             return s/float(l)
@@ -171,7 +172,7 @@ class TruthTable(object):
 
     def invert(self):
         cl = {}
-        for oi, clist in self.asgn_dict.iteritems():
+        for oi, clist in self.asgn_dict.items():
             for ci in clist.mapping:
                 if ci not in cl:
                     cl[ci] = set()
@@ -180,15 +181,15 @@ class TruthTable(object):
 
     def mean_overlap(self, lengths=None):
         cl = self.invert()
-        ckeys = cl.keys()
+        ckeys = list(cl.keys())
         nkeys = len(ckeys)
         if nkeys == 0:
             return None
 
         ovl = 0.0
         if lengths:
-            for i in xrange(nkeys):
-                for j in xrange(i+1, nkeys):
+            for i in range(nkeys):
+                for j in range(i+1, nkeys):
                     int_cls = cl[ckeys[i]] & cl[ckeys[j]]
                     sint = 0
                     for ic in int_cls:
@@ -200,8 +201,8 @@ class TruthTable(object):
                     ovl += sint / float(sovl)
             return ovl / (2*nkeys)
         else:
-            for i in xrange(nkeys):
-                for j in xrange(i+1, nkeys):
+            for i in range(nkeys):
+                for j in range(i+1, nkeys):
                     int_cls = len(cl[ckeys[i]] & cl[ckeys[j]])
                     uni_cls = len(cl[ckeys[i]] | cl[ckeys[j]])
                     ovl += int_cls / float(uni_cls)
@@ -209,17 +210,17 @@ class TruthTable(object):
 
     def overlaps(self, lengths=None):
         cl = self.invert()
-        ckeys = cl.keys()
+        ckeys = list(cl.keys())
         nkeys = len(ckeys)
         if nkeys == 0:
             return None
 
-        print nkeys
+        print(nkeys)
         ovl = np.zeros((nkeys, nkeys))
 
         if lengths:
-            for i in xrange(nkeys):
-                for j in xrange(nkeys):
+            for i in range(nkeys):
+                for j in range(nkeys):
                     int_cls = cl[ckeys[i]] & cl[ckeys[j]]
                     sint = 0
                     for ic in int_cls:
@@ -230,8 +231,8 @@ class TruthTable(object):
                         sovl += lengths[ic]
                     ovl[i, j] = sint / float(sovl)
         else:
-            for i in xrange(nkeys):
-                for j in xrange(nkeys):
+            for i in range(nkeys):
+                for j in range(nkeys):
                     int_cls = len(cl[ckeys[i]] & cl[ckeys[j]])
                     uni_cls = len(cl[ckeys[i]] | cl[ckeys[j]])
                     ovl[i, j] = int_cls / float(uni_cls)
@@ -244,21 +245,21 @@ class TruthTable(object):
         n_objects = self.num_objects()
         degen_ratio = 100.0 * self.degeneracy()
 
-        print '{0} symbols in table, {1:.0f} assignments of {2} objects ({3:.1f}% degeneracy)'.format(
-            n_symbol, n_assignments, n_objects, degen_ratio)
+        print('{0} symbols in table, {1:.0f} assignments of {2} objects ({3:.1f}% degeneracy)'.format(
+            n_symbol, n_assignments, n_objects, degen_ratio))
 
-        print 'ext_symb\tint_symb\tcount\tpercentage'
+        print('ext_symb\tint_symb\tcount\tpercentage')
         for n, ci in enumerate(sorted(self.label_count, key=self.label_count.get, reverse=True), start=1):
-            print '{0}\t{1}\t{2}\t{3:5.3f}'.format(ci,
+            print('{0}\t{1}\t{2}\t{3:5.3f}'.format(ci,
                                                    self.label_map[ci],
                                                    self.label_count[ci],
-                                                   self.label_count[ci] / float(n_assignments))
+                                                   self.label_count[ci] / float(n_assignments)))
             if n == max_n:
                 break
 
     def refresh_counter(self):
         self.label_count = Counter()
-        for k, v in self.asgn_dict.iteritems():
+        for k, v in self.asgn_dict.items():
             self.label_count.update(v.mapping)
 
     def cluster_extents(self, obj_weights):
@@ -276,7 +277,7 @@ class TruthTable(object):
             sum_len = np.sum(desc_len)
             sum_oi = 0
             i = None
-            for i in xrange(len(desc_len)):
+            for i in range(len(desc_len)):
                 sum_oi += desc_len[i]
                 if sum_oi > 0.5*sum_len:
                     break
@@ -308,7 +309,7 @@ class TruthTable(object):
         :param min_proportion: threshold minimum extent of a class
         :param obj_weights: dict of object weights/lengths
         """
-        print '##filter_started_with {0}'.format(len(self.label_count.keys()))
+        print('##filter_started_with {0}'.format(len(self.label_count.keys())))
 
         # make a inverted mapping, to build the deletion collection
         cl_to_obj = self.invert()
@@ -324,7 +325,7 @@ class TruthTable(object):
         if len(self.label_count) == 0:
             raise ValueError('Filtering resulted in an empty table')
 
-        print '##filter_finished_with {0}'.format(len(self.label_count.keys()))
+        print('##filter_finished_with {0}'.format(len(self.label_count.keys())))
 
     def filter_class(self, min_proportion):
         """
@@ -333,11 +334,11 @@ class TruthTable(object):
         algorithm performance.
         :param min_proportion least significant weight for a class assignment to pass
         """
-        print '##filter_started_with {0}'.format(len(self.label_count.keys()))
+        print('##filter_started_with {0}'.format(len(self.label_count.keys())))
 
         cl_to_obj = self.invert()
         n_obj = float(sum(self.label_count.values()))
-        for ci, cl_size in self.label_count.iteritems():
+        for ci, cl_size in self.label_count.items():
             if self.label_count[ci] / n_obj < min_proportion:
                 self._remove_class(ci, cl_to_obj)
 
@@ -346,11 +347,11 @@ class TruthTable(object):
         if len(self.label_count) == 0:
             raise ValueError('Filtering resulted in an empty table')
 
-        print '##filter_finished_with {0}'.format(len(self.label_count.keys()))
+        print('##filter_finished_with {0}'.format(len(self.label_count.keys())))
 
     def get_weights(self):
         _w = {}
-        for k, asgn in self.asgn_dict.iteritems():
+        for k, asgn in self.asgn_dict.items():
             _w[k] = asgn.weight
         return _w
 
@@ -376,6 +377,7 @@ class TruthTable(object):
         In the case of a tie, no effort is made to be uniformly random in the case of a tie and
         dependent on the behaviour of sort.
         :param universal: use universal symbols rather than labels supplied
+        :param use_set:
         :return plain dict with only one class->cluster mapping.
         """
         _s = OrderedDict()
@@ -406,7 +408,7 @@ class TruthTable(object):
         :param yd: generic yaml object, dict of dicts
         :return:
         """
-        for k, v in yd.iteritems():
+        for k, v in yd.items():
             self.asgn_dict[k] = Assignment(v['mapping'], v['weight'])
             self.label_count.update(v['mapping'].keys())
         labels = sorted(self.label_count.keys())
@@ -427,8 +429,8 @@ class TruthTable(object):
         filt_asgn = 0
         all_obj = len(dt)
 
-        for k, v in dt.iteritems():
-            v_filt = dict((kv, vv) for kv, vv in v.iteritems() if int(vv) >= min_score)
+        for k, v in dt.items():
+            v_filt = dict((kv, vv) for kv, vv in v.items() if int(vv) >= min_score)
             filt_asgn += len(v) - len(v_filt)
             all_asgn += len(v)
             if len(v_filt) == 0:
@@ -440,8 +442,8 @@ class TruthTable(object):
             self.label_count.update(v_filt.keys())
 
         if filt_asgn > 0:
-            print 'Filtered {0}/{1} assignments and {2}/{3} objects below minimum score {4}'.format(
-                filt_asgn, all_asgn, filt_obj, all_obj, min_score)
+            print('Filtered {0}/{1} assignments and {2}/{3} objects below minimum score {4}'.format(
+                filt_asgn, all_asgn, filt_obj, all_obj, min_score))
 
         labels = sorted(self.label_count.keys())
         self.label_map = dict((l, n) for n, l in enumerate(labels, 1))
@@ -486,7 +488,7 @@ class TruthTable(object):
             elif fmt == 'yaml':
                 yaml.dump(d, h_out, default_flow_style=False, width=YAML_WIDTH)
             elif fmt == 'delim':
-                for qry, sbjs in d.iteritems():
+                for qry, sbjs in d.items():
                     line = [str(qry)] + [str(si) for si in sorted(sbjs)]
                     h_out.write('{0}\n'.format(sep.join(line)))
             else:
@@ -505,7 +507,7 @@ def read_truth(pathname, fmt='json'):
         if fmt == 'json':
             d = io_utils.json_load_byteified(h_in)
         elif fmt == 'yaml':
-            d = yaml.load(h_in)
+            d = yaml.load(h_in, Loader=yaml.FullLoader)
         else:
             raise RuntimeError('Unsupported format requested [{0}]'.format(format))
 
@@ -533,6 +535,7 @@ def read_mcl(pathname):
         # initialise the table
         tt = TruthTable()
         tt.update(mcl)
+
     return tt
 
 
@@ -589,7 +592,7 @@ def simulate_error(tt, p_mut, p_indel, extra_symb=()):
     :return: truth table mutatant
     """
     symbols = list(set(tt.label_count.keys() + extra_symb))
-    print symbols
+    print(symbols)
     mut_dict = copy.deepcopy(tt.asgn_dict)
 
     for o_i in mut_dict.keys():

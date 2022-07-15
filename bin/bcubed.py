@@ -135,6 +135,7 @@ if __name__ == '__main__':
     import sys
     import os
     import glob
+    from multiprocessing import Pool
 
     def write_msg(stream, msg):
         stream.write(msg + '\n')
@@ -144,6 +145,7 @@ if __name__ == '__main__':
     parser.add_argument('pred', metavar='PREDICTION', help='Prediction MCL (file or directory)')
     parser.add_argument('output', metavar='OUTPUT', nargs='?', type=argparse.FileType('w'),
                         default=sys.stdout, help='Output file (stdout)')
+    parser.add_argument('-N', '--ncpu', type=int, help='Number of CPU to use for multi-input processing')
     parser.add_argument('--tfmt', choices=['json', 'yaml'], default='json',
                         help='Data format of truth table [json]')
     parser.add_argument('-w', '--weighted', default=False, action='store_true', help='Use truth object weights')
@@ -182,15 +184,19 @@ if __name__ == '__main__':
         print(e)
         sys.exit(1)
 
-    result_table = []
-    for cl in clusterings:
+    input_args = []
+    for cl_i in clusterings:
         result = OrderedDict({
             'truth_table': args.truth,
             'prediction': args.pred,
             'use_weights': args.weighted,
             'use_hard_truth': args.hard})
-        bcubed_fscore(result, truth, cl, weights)
-        result_table.append(result)
+        input_args.append([result, truth, cl_i, weights])
+
+    with Pool(args.ncpu) as pool:
+        pool.starmap(bcubed_fscore, input_args)
+
+    result_table = [args[0] for args in input_args]
 
     # write out as a single line csv file
     pd.DataFrame(result_table).to_csv(args.output, index=False, float_format='%.8f')

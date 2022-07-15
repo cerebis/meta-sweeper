@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 
 def filter_shared(d, shared):
@@ -86,7 +86,7 @@ def bcubed_precision(ovl_dict, c2c_size, t2t_size, cd, weight=None):
     return precision / len(cd)
 
 
-def bcubed_fscore(td, cd, weight=None):
+def bcubed_fscore(result, td, cd, weight=None):
     cd = cd.copy()
     td = td.copy()
     shared = set(td.keys()) & set(cd.keys())
@@ -116,18 +116,20 @@ def bcubed_fscore(td, cd, weight=None):
     print('Calculating recall')
     rec = bcubed_recall(td_ovl, c2c_size, t2t_size, td, weight)
 
-    return {'pre': pre,
-            'rec': rec,
-            'fscore': 2.0*pre*rec / (pre+rec),
-            'shared_overlap': shared_ovlp,
-            'shared2clustering': shared2cl,
-            'shared2truth': shared2tr}
+    result['precision'] = pre
+    result['recall'] = rec
+    result['f_score'] = 2.0*pre*rec / (pre+rec)
+    result['truth_count'] = len(td)
+    result['pred_count'] = len(cd)
+    result['shared_count'] = len(shared)
+    result['shared_overlap'] = shared_ovlp
+    result['shared2clustering'] = shared2cl
+    result['shared2truth'] = shared2tr
 
 
 if __name__ == '__main__':
 
     import truthtable as tt
-    import io_utils
     import argparse
     import pandas as pd
     import sys
@@ -142,8 +144,6 @@ if __name__ == '__main__':
                         default=sys.stdout, help='Output file (stdout)')
     parser.add_argument('--tfmt', choices=['json', 'yaml'], default='json',
                         help='Data format of truth table [json]')
-    parser.add_argument('--ofmt', choices=['plain', 'json', 'yaml'], default='plain',
-                        help='Output format [plain]')
     parser.add_argument('-w', '--weighted', default=False, action='store_true', help='Use truth object weights')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbose output')
     parser.add_argument('--hard', action='store_true', default=False, help='Extract hard truth prior to analysis')
@@ -179,6 +179,13 @@ if __name__ == '__main__':
         print(er)
         sys.exit(1)
 
-    result = bcubed_fscore(truth, clustering, weights)
-    # io_utils.write_to_stream(args.output, result, fmt=args.ofmt)
+    result = OrderedDict({
+        'truth_table': args.truth,
+        'prediction': args.pred,
+        'use_weights': args.weighted,
+        'use_hard_truth': args.hard})
+
+    bcubed_fscore(result, truth, clustering, weights)
+
+    # write out as a single line csv file
     pd.DataFrame([result]).to_csv(args.output, index=False, float_format='%.8f')

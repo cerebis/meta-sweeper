@@ -103,17 +103,17 @@ def bcubed_fscore(result, td, cd, weight=None):
     filter_shared(cd, shared)
     filter_shared(td, shared)
 
-    print('Building overlap set lookup')
+    # print('Building overlap set lookup')
     cd_ovl = build_overlap_set_dict(cd)
     td_ovl = build_overlap_set_dict(td)
 
-    print('Bulding size lookup')
+    # print('Bulding size lookup')
     c2c_size = build_clsize_dict(cd, cd_ovl)
     t2t_size = build_clsize_dict(td, td_ovl)
 
-    print('Calculating precision')
+    # print('Calculating precision')
     pre = bcubed_precision(cd_ovl, c2c_size, t2t_size, cd, weight)
-    print('Calculating recall')
+    # print('Calculating recall')
     rec = bcubed_recall(td_ovl, c2c_size, t2t_size, td, weight)
 
     result['precision'] = pre
@@ -133,59 +133,61 @@ if __name__ == '__main__':
     import argparse
     import pandas as pd
     import sys
+    import os
+    import glob
 
     def write_msg(stream, msg):
         stream.write(msg + '\n')
 
     parser = argparse.ArgumentParser(description='Calculate extended bcubed metric')
     parser.add_argument('truth', metavar='TRUTH', help='Truth table (json format)')
-    parser.add_argument('pred', metavar='PREDICTION', help='Prediction table (mcl format)')
+    parser.add_argument('pred', metavar='PREDICTION', help='Prediction MCL (file or directory)')
     parser.add_argument('output', metavar='OUTPUT', nargs='?', type=argparse.FileType('w'),
                         default=sys.stdout, help='Output file (stdout)')
     parser.add_argument('--tfmt', choices=['json', 'yaml'], default='json',
                         help='Data format of truth table [json]')
     parser.add_argument('-w', '--weighted', default=False, action='store_true', help='Use truth object weights')
-    parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbose output')
     parser.add_argument('--hard', action='store_true', default=False, help='Extract hard truth prior to analysis')
     args = parser.parse_args()
 
     try:
         # read truth and convert to basic soft table
         truth = tt.read_truth(args.truth, args.tfmt)
-        if len(truth) == 0:
-            raise RuntimeError('Truth table contains no assignments: {0}'.format(args.truth))
+        assert len(truth) > 0, f'Truth table contains no assignments: {args.truth}'
 
         # collect object weights if requested
         weights = truth.get_weights() if args.weighted else None
-
-        if args.verbose:
-            print('Truth Statistics')
-            truth.print_tally()
 
         # convert to a plain dict representation, either soft (1:*) or hard (1:1)
         truth = truth.hard(True, use_set=True) if args.hard else truth.soft(True)
 
         # read clustering and convert to basic soft table
-        clustering = tt.read_mcl(args.pred)
-        if len(clustering) == 0:
-            raise RuntimeError('Clustering contains no assignments: {0}'.format(args.pred))
+        if not os.path.exists(args.pred):
+            raise IOError(f'Path does not exist: {args.pred}')
+        elif os.path.isfile(args.pred):
+            pred_files = [args.pred]
+        else:
+            pred_files = [fn for fn in glob.glob(os.path.join(args.pred, '*.mcl'))]
 
-        if args.verbose:
-            print('Clustering Statistics')
-            clustering.print_tally()
-        clustering = clustering.soft(True)
+        clusterings = []
+        for fn in pred_files:
+            cl = tt.read_mcl(fn)
+            assert len(cl) > 0, f'Clustering contains no assignments: {fn}'
+            clusterings.append(cl.soft(True))
 
-    except RuntimeError as er:
-        print(er)
+    except Exception as e:
+        print(e)
         sys.exit(1)
 
-    result = OrderedDict({
-        'truth_table': args.truth,
-        'prediction': args.pred,
-        'use_weights': args.weighted,
-        'use_hard_truth': args.hard})
-
-    bcubed_fscore(result, truth, clustering, weights)
+    result_table = []
+    for cl in clusterings:
+        result = OrderedDict({
+            'truth_table': args.truth,
+            'prediction': args.pred,
+            'use_weights': args.weighted,
+            'use_hard_truth': args.hard})
+        bcubed_fscore(result, truth, cl, weights)
+        result_table.append(result)
 
     # write out as a single line csv file
-    pd.DataFrame([result]).to_csv(args.output, index=False, float_format='%.8f')
+    pd.DataFrame(result_table).to_csv(args.output, index=False, float_format='%.8f')

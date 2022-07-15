@@ -199,7 +199,9 @@ if __name__ == '__main__':
     with Pool(args.ncpu) as pool:
         pool.starmap(bcubed_fscore, input_args)
 
-    result_table = [args[0] for args in input_args]
+    result_table = []
+    while not shared_queue.empty():
+        result_table.append(shared_queue.get())
 
     # write out as a single line csv file
     pd.DataFrame(result_table).to_csv(args.output, index=False, float_format='%.8f')

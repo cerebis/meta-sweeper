@@ -136,7 +136,7 @@ if __name__ == '__main__':
     import sys
     import os
     import glob
-    from multiprocessing import Pool, Queue
+    from multiprocessing import Pool, Manager
 
     def write_msg(stream, msg):
         stream.write(msg + '\n')
@@ -185,7 +185,8 @@ if __name__ == '__main__':
         print(e)
         sys.exit(1)
 
-    shared_queue = Queue()
+    manger = Manager()
+    shared_queue = manger.Queue()
     input_args = []
     for cl in clusterings:
         info = OrderedDict({

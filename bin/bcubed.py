@@ -86,7 +86,7 @@ def bcubed_precision(ovl_dict, c2c_size, t2t_size, cd, weight=None):
     return precision / len(cd)
 
 
-def bcubed_fscore(result, td, cd, weight=None):
+def bcubed_fscore(return_queue, result, td, cd, weight=None):
     cd = cd.copy()
     td = td.copy()
     shared = set(td.keys()) & set(cd.keys())
@@ -125,6 +125,7 @@ def bcubed_fscore(result, td, cd, weight=None):
     result['shared_overlap'] = shared_ovlp
     result['shared2clustering'] = shared2cl
     result['shared2truth'] = shared2tr
+    return_queue.put(result)
 
 
 if __name__ == '__main__':
@@ -135,7 +136,7 @@ if __name__ == '__main__':
     import sys
     import os
     import glob
-    from multiprocessing import Pool
+    from multiprocessing import Pool, Queue
 
     def write_msg(stream, msg):
         stream.write(msg + '\n')
@@ -178,20 +179,21 @@ if __name__ == '__main__':
             print(f'Read clustering from: {fn}')
             cl = tt.read_mcl(fn)
             assert len(cl) > 0, f'Clustering contains no assignments: {fn}'
-            clusterings.append(cl.soft(True))
+            clusterings.append([fn, cl.soft(True)])
 
     except Exception as e:
         print(e)
         sys.exit(1)
 
+    shared_queue = Queue()
     input_args = []
-    for cl_i in clusterings:
-        result = OrderedDict({
+    for cl in clusterings:
+        info = OrderedDict({
             'truth_table': args.truth,
-            'prediction': args.pred,
+            'prediction': cl[0],
             'use_weights': args.weighted,
             'use_hard_truth': args.hard})
-        input_args.append([result, truth, cl_i, weights])
+        input_args.append([shared_queue, info, truth, cl[1], weights])
 
     with Pool(args.ncpu) as pool:
         pool.starmap(bcubed_fscore, input_args)

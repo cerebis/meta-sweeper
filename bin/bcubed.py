@@ -165,12 +165,15 @@ if __name__ == '__main__':
         if not os.path.exists(args.pred):
             raise IOError(f'Path does not exist: {args.pred}')
         elif os.path.isfile(args.pred):
+            print('Processing as a single file input')
             pred_files = [args.pred]
         else:
+            print('Processing as directory input')
             pred_files = [fn for fn in glob.glob(os.path.join(args.pred, '*.mcl'))]
 
         clusterings = []
         for fn in pred_files:
+            print(f'Read clustering from: {fn}')
             cl = tt.read_mcl(fn)
             assert len(cl) > 0, f'Clustering contains no assignments: {fn}'
             clusterings.append(cl.soft(True))
